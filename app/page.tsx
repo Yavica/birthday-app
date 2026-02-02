@@ -141,8 +141,8 @@ export default function BirthdayApp() {
                     transition={{ delay: 1 + (i * 0.2) }}
                     className="bg-white p-2 pb-6 shadow-xl rounded-sm border border-gray-100"
                   >
-                    <img src={`/photo${i}.jpg`} alt="Memory" className="w-full aspect-square object-cover" />
-                    <p className="mt-2 text-[10px] text-gray-400 font-mono text-center tracking-widest uppercase">Memory 0{i}</p>
+                    <img src={`/photo${i}.jpg`} alt="Youuuuu" className="w-full aspect-square object-cover" />
+                    <p className="mt-2 text-[10px] text-gray-400 font-mono text-center tracking-widest uppercase">Youuuuu{i}</p>
                   </motion.div>
                 ))}
              </div>
@@ -162,7 +162,7 @@ export default function BirthdayApp() {
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                     className="bg-yellow-50 p-6 rounded-2xl border-2 border-dashed border-yellow-200 text-yellow-800 font-serif shadow-inner"
                   >
-                    <p className="text-lg">"I love you more than words can describe. Can't wait to celebrate tonight! ❤️"</p>
+                    <p className="text-lg">"I love you more than words can describe, your a really great person who deserves all the happiness in the world. Can't wait to celebrate your birthday! ❤️"</p>
                   </motion.div>
                 )}
              </div>
