@@ -1,34 +1,49 @@
 "use client";
-const audioRef = useRef<HTMLAudioElement | null>(null);
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { Heart, Stars, Mic } from 'lucide-react';
+import { Heart, Stars, Mic, Lock } from 'lucide-react';
+
+// --- TYPEWRITER COMPONENT ---
+const Typewriter = ({ text, delay = 70 }: { text: string, delay?: number }) => {
+  const [currentText, setCurrentText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setCurrentText((prevText) => prevText + text[currentIndex]);
+        setCurrentIndex((prevIndex) => prevIndex + 1);
+      }, delay);
+      return () => clearTimeout(timeout);
+    }
+  }, [currentIndex, delay, text]);
+
+  return <span>{currentText}</span>;
+};
 
 export default function BirthdayApp() {
   const [step, setStep] = useState('candle'); 
   const [isBlownOut, setIsBlownOut] = useState(false);
   const [hasMicAccess, setHasMicAccess] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
+  
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // --- MICROPHONE LOGIC ---
   const startMic = async () => {
-    // 1. Pre-load the audio so the browser allows it to play later
     if (audioRef.current) {
-      audioRef.current.load();
+      audioRef.current.load(); // Wakes up audio for mobile browsers
     }
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setHasMicAccess(true);
-      
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const analyser = audioContext.createAnalyser();
       const microphone = audioContext.createMediaStreamSource(stream);
       microphone.connect(analyser);
       analyser.fftSize = 256;
-      
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
 
@@ -38,141 +53,124 @@ export default function BirthdayApp() {
       const checkVolume = () => {
         if (isBlownOut) return;
         analyser.getByteFrequencyData(dataArray);
-        
-        // Calculate average volume
         const volume = dataArray.reduce((a, b) => a + b) / bufferLength;
-
-        // Threshold of 60 is a solid puff/blow
         if (volume > 60) {
           handleBlow();
-          // Clean up: stop the microphone after successful blow
           stream.getTracks().forEach(track => track.stop());
           audioContext.close();
         } else {
           requestAnimationFrame(checkVolume);
         }
       };
-      
       checkVolume();
     } catch (err) {
-      console.error("Mic access denied or error:", err);
-      alert("Please allow mic access or just click the candle to continue!");
+      console.error("Mic error:", err);
+      alert("Please allow mic access or just click the flame!");
     }
   };
 
   const handleBlow = () => {
-  setIsBlownOut(true);
-  
-  // Start the music!
-  if (audioRef.current) {
-    audioRef.current.play();
-  }
-
-  confetti({
-    particleCount: 150,
-    spread: 70,
-    origin: { y: 0.6 },
-    colors: ['#FF69B4', '#FFB6C1', '#FFFFFF']
-  });
-  setTimeout(() => setStep('card'), 2000);
-};
+    setIsBlownOut(true);
+    if (audioRef.current) {
+      audioRef.current.play().catch(e => console.error("Audio play blocked:", e));
+    }
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#FF69B4', '#FFB6C1', '#FFFFFF']
+    });
+    setTimeout(() => setStep('card'), 2000);
+  };
 
   return (
-    <main className="min-h-screen bg-[#FFF0F5] flex items-center justify-center p-6 overflow-hidden">
+    <main className="min-h-screen bg-[#FFF0F5] flex flex-col items-center justify-center p-6 overflow-x-hidden">
       <AnimatePresence mode="wait">
         
-        {/* SCENE 1: THE CANDLE */}
+        {/* SCENE 1: THE BLOW-OUT */}
         {step === 'candle' && (
           <motion.div 
             key="candle"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="text-center"
           >
-            <h2 className="text-2xl text-pink-600 mb-8 font-medium italic">
-              {hasMicAccess ? "Now, blow on the mic!" : "Ready to make a wish?"}
-            </h2>
-            
+            <h2 className="text-2xl text-pink-600 mb-8 font-medium italic">Make a wish...</h2>
             <div className="relative flex justify-center mb-12">
               <div className="w-8 h-24 bg-pink-200 rounded-full relative shadow-inner">
                 {!isBlownOut && (
                   <motion.div 
                     animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
                     transition={{ repeat: Infinity, duration: 0.6 }}
-                    className="absolute -top-10 left-0 w-8 h-12 bg-orange-400 rounded-full blur-md"
+                    onClick={handleBlow}
+                    className="absolute -top-10 left-0 w-8 h-12 bg-orange-400 rounded-full blur-md cursor-pointer"
                   />
                 )}
               </div>
             </div>
-
             {!hasMicAccess ? (
-              <button 
-                onClick={startMic}
-                className="flex items-center gap-2 bg-white text-pink-500 px-6 py-3 rounded-full shadow-lg font-bold hover:bg-pink-50 transition-all mx-auto"
-              >
-                <Mic size={20} /> Allow Mic to Blow Candle
+              <button onClick={startMic} className="flex items-center gap-2 bg-white text-pink-500 px-6 py-3 rounded-full shadow-lg font-bold mx-auto">
+                <Mic size={20} /> Use Mic to Blow
               </button>
             ) : (
-              <p className="text-pink-400 animate-pulse">Waiting for your puff... 💨</p>
+              <p className="text-pink-400 animate-pulse">Blowing now! 💨</p>
             )}
-            
-            <button onClick={handleBlow} className="mt-8 text-xs text-pink-300 underline">
-              Or click here if mic doesn't work
-            </button>
           </motion.div>
         )}
 
-        {/* SCENE 2: THE CARD & GALLERY */}
+        {/* SCENE 2: THE REVEAL */}
         {step === 'card' && (
           <motion.div 
             key="card"
-            initial={{ opacity: 0, y: 100 }} animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-md space-y-8 pb-10"
+            initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-md space-y-6 pb-20"
           >
-             {/* The Card Face */}
              <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl border-t-[12px] border-pink-400 text-center">
-                <Heart className="mx-auto text-red-400 fill-red-400 mb-4 animate-bounce" />
-                <h1 className="text-3xl font-extrabold text-gray-800 mb-4">Happy Birthday!</h1>
-                <p className="text-gray-600 leading-relaxed italic">
-                  "I wanted to build you something as unique and beautiful as you are. 
-                  Thank you for being my favorite person."
-                </p>
+                <Heart className="mx-auto text-red-400 fill-red-400 mb-4" />
+                <h1 className="text-2xl font-bold text-gray-800 mb-4">Happy Birthday!</h1>
+                <div className="text-gray-600 italic min-h-[80px]">
+                  <Typewriter text="I built this just for you because you deserve the world. Thank you for being you." />
+                </div>
              </div>
 
-             {/* Polaroid Grid (The Happiepages Style) */}
              <div className="grid grid-cols-2 gap-4">
                 {[1, 2, 3, 4].map((i) => (
                   <motion.div 
                     key={i}
-                    initial={{ opacity: 0, rotate: i % 2 === 0 ? 5 : -5 }}
+                    initial={{ opacity: 0, rotate: i % 2 === 0 ? 3 : -3 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.2 }}
-                    className="bg-white p-3 pb-10 shadow-xl border border-gray-100 transform hover:scale-105 hover:z-10 transition-all"
+                    transition={{ delay: 1 + (i * 0.2) }}
+                    className="bg-white p-2 pb-6 shadow-xl rounded-sm border border-gray-100"
                   >
-                    <div className="aspect-square w-full rounded-sm overflow-hidden border border-gray-100">
-  <img 
-    src={`/photo${i}.jpg`} 
-    alt={`Memory ${i}`}
-    className="w-full h-full object-cover"
-    onError={(e) => {
-      // This is a fallback in case the image name is wrong
-      e.currentTarget.src = "https://via.placeholder.com/400?text=Upload+Photo";
-    }}
-  />
-</div>
-                    <p className="mt-3 text-sm font-handwriting text-gray-500 text-center">
-  {i === 1 && "Msupaaa"}
-  {i === 2 && "Kuwa Model"}
-  {i === 3 && "Laughing with you"}
-  {i === 4 && "Kwela Fineee"}
-</p>
+                    <img src={`/photo${i}.jpg`} alt="Memory" className="w-full aspect-square object-cover" />
+                    <p className="mt-2 text-[10px] text-gray-400 font-mono text-center tracking-widest uppercase">Memory 0{i}</p>
                   </motion.div>
                 ))}
              </div>
+
+             {/* THE SECRET NOTE SECTION */}
+             <div className="mt-10 text-center">
+                {!showSecret ? (
+                  <motion.button 
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowSecret(true)}
+                    className="flex items-center gap-2 bg-pink-500 text-white px-6 py-2 rounded-full mx-auto text-sm shadow-md"
+                  >
+                    <Lock size={14} /> Reveal Secret Note
+                  </motion.button>
+                ) : (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                    className="bg-yellow-50 p-6 rounded-2xl border-2 border-dashed border-yellow-200 text-yellow-800 font-serif shadow-inner"
+                  >
+                    <p className="text-lg">"I love you more than words can describe. Can't wait to celebrate tonight! ❤️"</p>
+                  </motion.div>
+                )}
+             </div>
           </motion.div>
         )}
-
       </AnimatePresence>
-      <audio ref={audioRef} src="/birthday-song.mp3" preload="auto" />
+
+      <audio ref={audioRef} src="/birthday-song.mp3" loop preload="auto" />
     </main>
   );
 }
