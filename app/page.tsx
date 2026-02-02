@@ -1,4 +1,5 @@
 "use client";
+const audioRef = useRef<HTMLAudioElement | null>(null);
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -13,11 +14,16 @@ export default function BirthdayApp() {
 
   // --- MICROPHONE LOGIC ---
   const startMic = async () => {
+    // 1. Pre-load the audio so the browser allows it to play later
+    if (audioRef.current) {
+      audioRef.current.load();
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setHasMicAccess(true);
       
-      const audioContext = new AudioContext();
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const analyser = audioContext.createAnalyser();
       const microphone = audioContext.createMediaStreamSource(stream);
       microphone.connect(analyser);
@@ -32,33 +38,44 @@ export default function BirthdayApp() {
       const checkVolume = () => {
         if (isBlownOut) return;
         analyser.getByteFrequencyData(dataArray);
+        
+        // Calculate average volume
         const volume = dataArray.reduce((a, b) => a + b) / bufferLength;
 
-        // Threshold for "blowing" - 60 is usually a good puff
+        // Threshold of 60 is a solid puff/blow
         if (volume > 60) {
           handleBlow();
-          stream.getTracks().forEach(track => track.stop()); // Stop mic after blow
+          // Clean up: stop the microphone after successful blow
+          stream.getTracks().forEach(track => track.stop());
+          audioContext.close();
         } else {
           requestAnimationFrame(checkVolume);
         }
       };
+      
       checkVolume();
     } catch (err) {
-      console.error("Mic access denied", err);
-      alert("Please allow mic access or just click the candle!");
+      console.error("Mic access denied or error:", err);
+      alert("Please allow mic access or just click the candle to continue!");
     }
   };
 
   const handleBlow = () => {
-    setIsBlownOut(true);
-    confetti({
-      particleCount: 150,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#FF69B4', '#FFB6C1', '#FFFFFF']
-    });
-    setTimeout(() => setStep('card'), 2000);
-  };
+  setIsBlownOut(true);
+  
+  // Start the music!
+  if (audioRef.current) {
+    audioRef.current.play();
+  }
+
+  confetti({
+    particleCount: 150,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ['#FF69B4', '#FFB6C1', '#FFFFFF']
+  });
+  setTimeout(() => setStep('card'), 2000);
+};
 
   return (
     <main className="min-h-screen bg-[#FFF0F5] flex items-center justify-center p-6 overflow-hidden">
@@ -155,6 +172,7 @@ export default function BirthdayApp() {
         )}
 
       </AnimatePresence>
+      <audio ref={audioRef} src="/birthday-song.mp3" preload="auto" />
     </main>
   );
 }
