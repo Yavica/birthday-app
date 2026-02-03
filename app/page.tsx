@@ -182,7 +182,7 @@ export default function BirthdayApp() {
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                     className="bg-yellow-50 p-6 rounded-2xl border-2 border-dashed border-yellow-200 text-yellow-800 font-serif shadow-inner"
                   >
-                    <p className="text-lg italic text-center">"I love you more than words can describe. Happy Birthday! ❤️"</p>
+                    <p className="text-lg italic text-center">"I love you more than words can describe. You are a really great person who deserves all the happiness in the world. Can't wait to celebrate your birthday! ❤️ Happy Birthday! ❤️"</p>
                   </motion.div>
                 )}
              </div>
