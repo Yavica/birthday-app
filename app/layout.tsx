@@ -14,11 +14,15 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "A Birthday Surprise for You 🎁",
-  description: "Happy Birthday! I made something special just for you. Tap to open!",
+  description: "Jamie, I made this for you. Tap to open!",
   openGraph: {
     title: "A Birthday Surprise for You 🎁",
-    description: "Happy Birthday! Tap to open your gift.",
-    images: ['/photo1.jpg'], // This uses your first memory as the link preview image!
+    description: "Tap to open your gift!",
+    images: [{
+      url: '/photo1.jpg', // Or your custom preview image
+      width: 1200,
+      height: 630,
+    }],
     type: "website",
   },
 };

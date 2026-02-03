@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { Heart, Stars, Mic, Lock } from 'lucide-react';
+import { Heart, Mic, Lock } from 'lucide-react';
 
 // --- TYPEWRITER COMPONENT ---
 const Typewriter = ({ text, delay = 70 }: { text: string, delay?: number }) => {
@@ -22,6 +22,30 @@ const Typewriter = ({ text, delay = 70 }: { text: string, delay?: number }) => {
   return <span>{currentText}</span>;
 };
 
+// --- FLOATING HEARTS COMPONENT ---
+const FloatingHearts = () => {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ y: "100vh", opacity: 0 }}
+          animate={{ y: "-10vh", opacity: [0, 1, 0] }}
+          transition={{
+            duration: 5 + Math.random() * 5,
+            repeat: Infinity,
+            delay: Math.random() * 5,
+          }}
+          className="absolute text-pink-300"
+          style={{ left: `${Math.random() * 100}%` }}
+        >
+          <Heart size={20 + Math.random() * 20} fill="currentColor" />
+        </motion.div>
+      ))}
+    </div>
+  );
+};
+
 export default function BirthdayApp() {
   const [step, setStep] = useState('candle'); 
   const [isBlownOut, setIsBlownOut] = useState(false);
@@ -34,7 +58,7 @@ export default function BirthdayApp() {
 
   const startMic = async () => {
     if (audioRef.current) {
-      audioRef.current.load(); // Wakes up audio for mobile browsers
+      audioRef.current.load();
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -84,15 +108,15 @@ export default function BirthdayApp() {
   };
 
   return (
-    <main className="min-h-screen bg-[#FFF0F5] flex flex-col items-center justify-center p-6 overflow-x-hidden">
+    <main className="min-h-screen bg-[#FFF0F5] flex flex-col items-center justify-center p-6 overflow-x-hidden relative">
+      <FloatingHearts />
+      
       <AnimatePresence mode="wait">
-        
-        {/* SCENE 1: THE BLOW-OUT */}
         {step === 'candle' && (
           <motion.div 
             key="candle"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="text-center"
+            className="text-center z-10"
           >
             <h2 className="text-2xl text-pink-600 mb-8 font-medium italic">Make a wish...</h2>
             <div className="relative flex justify-center mb-12">
@@ -112,65 +136,19 @@ export default function BirthdayApp() {
                 <Mic size={20} /> Use Mic to Blow
               </button>
             ) : (
-              <p className="text-pink-400 animate-pulse">Blowing now! 💨</p>
+              <p className="text-pink-400 animate-pulse">Blow into the mic! 💨</p>
             )}
           </motion.div>
         )}
 
-        {/* SCENE 2: THE REVEAL */}
         {step === 'card' && (
           <motion.div 
             key="card"
             initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-md space-y-6 pb-20"
+            className="w-full max-w-md space-y-6 pb-20 z-10"
           >
              <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl border-t-[12px] border-pink-400 text-center">
                 <Heart className="mx-auto text-red-400 fill-red-400 mb-4" />
                 <h1 className="text-2xl font-bold text-gray-800 mb-4">Happy Birthday!</h1>
                 <div className="text-gray-600 italic min-h-[80px]">
-                  <Typewriter text="I built this just for you because you deserve the world. Thank you for being you." />
-                </div>
-             </div>
-
-             <div className="grid grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <motion.div 
-                    key={i}
-                    initial={{ opacity: 0, rotate: i % 2 === 0 ? 3 : -3 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1 + (i * 0.2) }}
-                    className="bg-white p-2 pb-6 shadow-xl rounded-sm border border-gray-100"
-                  >
-                    <img src={`/photo${i}.jpg`} alt="Youuuuu" className="w-full aspect-square object-cover" />
-                    <p className="mt-2 text-[10px] text-gray-400 font-mono text-center tracking-widest uppercase">Youuuuu{i}</p>
-                  </motion.div>
-                ))}
-             </div>
-
-             {/* THE SECRET NOTE SECTION */}
-             <div className="mt-10 text-center">
-                {!showSecret ? (
-                  <motion.button 
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowSecret(true)}
-                    className="flex items-center gap-2 bg-pink-500 text-white px-6 py-2 rounded-full mx-auto text-sm shadow-md"
-                  >
-                    <Lock size={14} /> Reveal Secret Note
-                  </motion.button>
-                ) : (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                    className="bg-yellow-50 p-6 rounded-2xl border-2 border-dashed border-yellow-200 text-yellow-800 font-serif shadow-inner"
-                  >
-                    <p className="text-lg">"I love you more than words can describe, your a really great person who deserves all the happiness in the world. Can't wait to celebrate your birthday! ❤️"</p>
-                  </motion.div>
-                )}
-             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <audio ref={audioRef} src="/birthday-song.mp3" loop preload="auto" />
-    </main>
-  );
-}
+                  <Typewriter text="I built this just
