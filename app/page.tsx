@@ -12,8 +12,8 @@ const Typewriter = ({ text, delay = 70 }: { text: string, delay?: number }) => {
   useEffect(() => {
     if (currentIndex < text.length) {
       const timeout = setTimeout(() => {
-        setCurrentText((prevText) => prevText + text[currentIndex]);
-        setCurrentIndex((prevIndex) => prevIndex + 1);
+        setCurrentText((prev) => prev + text[currentIndex]);
+        setCurrentIndex((prev) => prev + 1);
       }, delay);
       return () => clearTimeout(timeout);
     }
@@ -57,9 +57,7 @@ export default function BirthdayApp() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const startMic = async () => {
-    if (audioRef.current) {
-      audioRef.current.load();
-    }
+    if (audioRef.current) audioRef.current.load();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setHasMicAccess(true);
@@ -88,8 +86,8 @@ export default function BirthdayApp() {
       };
       checkVolume();
     } catch (err) {
-      console.error("Mic error:", err);
-      alert("Please allow mic access or just click the flame!");
+      console.error(err);
+      alert("Mic access denied—just click the flame!");
     }
   };
 
@@ -126,7 +124,7 @@ export default function BirthdayApp() {
                     animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
                     transition={{ repeat: Infinity, duration: 0.6 }}
                     onClick={handleBlow}
-                    className="absolute -top-10 left-0 w-8 h-12 bg-orange-400 rounded-full blur-md cursor-pointer"
+                    className="absolute -top-10 left-0 w-8 h-12 bg-pink-400 rounded-full blur-md cursor-pointer"
                   />
                 )}
               </div>
@@ -136,7 +134,7 @@ export default function BirthdayApp() {
                 <Mic size={20} /> Use Mic to Blow
               </button>
             ) : (
-              <p className="text-pink-400 animate-pulse">Blow into the mic! 💨</p>
+              <p className="text-pink-400 animate-pulse font-medium">Blow now! 💨</p>
             )}
           </motion.div>
         )}
@@ -151,4 +149,48 @@ export default function BirthdayApp() {
                 <Heart className="mx-auto text-red-400 fill-red-400 mb-4" />
                 <h1 className="text-2xl font-bold text-gray-800 mb-4">Happy Birthday!</h1>
                 <div className="text-gray-600 italic min-h-[80px]">
-                  <Typewriter text="I built this just
+                  <Typewriter text="I built this just for you because you deserve the world. You are a really great person who deserves all the happiness. Can't wait to celebrate! ❤️" />
+                </div>
+             </div>
+
+             <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ opacity: 0, rotate: i % 2 === 0 ? 3 : -3 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1 + (i * 0.2) }}
+                    className="bg-white p-2 pb-6 shadow-xl rounded-sm border border-gray-100 overflow-hidden"
+                  >
+                    <img src={`/photo${i}.jpg`} alt="Memory" className="w-full aspect-square object-cover" />
+                    <p className="mt-2 text-[10px] text-gray-400 font-mono text-center tracking-widest uppercase italic">Memory {i}</p>
+                  </motion.div>
+                ))}
+             </div>
+
+             <div className="mt-10 text-center">
+                {!showSecret ? (
+                  <motion.button 
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowSecret(true)}
+                    className="flex items-center gap-2 bg-pink-500 text-white px-6 py-2 rounded-full mx-auto text-sm shadow-md"
+                  >
+                    <Lock size={14} /> Reveal Secret Note
+                  </motion.button>
+                ) : (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                    className="bg-yellow-50 p-6 rounded-2xl border-2 border-dashed border-yellow-200 text-yellow-800 font-serif shadow-inner"
+                  >
+                    <p className="text-lg italic text-center">"I love you more than words can describe. Happy Birthday! ❤️"</p>
+                  </motion.div>
+                )}
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <audio ref={audioRef} src="/birthday-song.mp3" loop preload="auto" />
+    </main>
+  );
+}
